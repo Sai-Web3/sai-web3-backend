@@ -1,0 +1,6 @@
+.DS_Store
+.env
+docs.txt
+login.txt
+yarn.lock
+test.js
