@@ -21,6 +21,8 @@ module.exports = {
 	// 分析
   analysis: async (req, res, next) => {
 
+    const name = req.body.name;
+    const description = req.body.description;
     const to = req.body.to;
     const career = req.body.career;
     const is_skip = req.body.is_skip || false;
@@ -28,11 +30,22 @@ module.exports = {
     let skills = [];
     let skill_values = [];
 
+    let sql = 'SELECT * FROM users WHERE wallet_address = "'+to+'"';
+    const users = await mysql.select(sql);
+
+    if(users.length > 0) {
+      sql = 'UPDATE users SET name = "'+name+'", description = "'+description+'" WHERE wallet_address = "'+to+'"';
+      await mysql.insert(sql);
+    } else {
+      sql = 'INSERT INTO users (name, description, wallet_address) VALUES ("'+name+'", "'+description+'", "'+to+'")';
+      await mysql.insert(sql);
+    }
+
     if(!is_skip) {
 
       const result = await ai.analyze(career.input_text, career.started_at, career.finished_at, to)
 
-      let sql = 'SELECT * FROM career_skill_values WHERE career_id = '+result.data.career_id;
+      sql = 'SELECT * FROM career_skill_values WHERE career_id = '+result.data.career_id;
       let dataes = await mysql.select(sql);
 
       for(let i in dataes) {
@@ -51,5 +64,7 @@ module.exports = {
 
     return res.status(200).send(JSON.stringify({status: true, sbt_address: process.env.SBT_ADDRESS, calldata: calldata, gas_price: gas_price, gas_limit: gas_limit}));
   },
- 
+
+
+
 };

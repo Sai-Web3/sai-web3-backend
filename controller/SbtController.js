@@ -19,12 +19,48 @@ module.exports = {
  
 	// SBT詳細
   detail: async (req, res, next) => {
+
     const sbt_id = req.params.sbt_id;
+
     const sbt_sql = 'SELECT wallet_address FROM sbts WHERE sbt_id = '+sbt_id+';';
     const sbt_data = await mysql.select(sbt_sql);
+
     const skill_value_sql = 'SELECT skills.skill_name, skills.skill_type_id, skill_values.value, skills.description FROM skill_values INNER JOIN skills ON skill_values.skill_id = skills.skill_id WHERE skill_values.sbt_id = '+sbt_id+' ORDER BY skill_values.value DESC;';
     const skill_value_data = await mysql.select(skill_value_sql);
-    return res.status(200).send(JSON.stringify({status: true, name: "Sai SBT", description: "Visualize Your Skill for New Era.", image: process.env.APP_URL+"/img/sbt.92f29dce.gif", owner: sbt_data[0].wallet_address, data: skill_value_data}));
+
+    const job_sql = 'SELECT * FROM jobs WHERE sbt_id = '+sbt_id;
+    const register_jobs = await mysql.select(job_sql);
+    let register_job_ids = [];
+
+    if(register_jobs.length > 0) {
+      for(let index in register_jobs) {
+        register_job_ids.push(register_jobs[index].id);
+      }
+    }
+
+    const application_offer_sql = 'SELECT * FROM offers WHERE sbt_id = '+sbt_id;
+    const application_offers = await mysql.select(application_offer_sql);
+    let application_offer_ids = [];
+
+    if(application_offers.length > 0) {
+      for(let index in application_offers) {
+        application_offer_ids.push(application_offers[index].job_id);
+      }
+    }
+
+    let application_jobs = [];
+    if(application_offer_ids.length > 0) {
+      const application_job_sql = 'SELECT * FROM jobs WHERE job_id IN ('+application_offer_ids.join(",")+')';
+      application_jobs = await mysql.select(application_job_sql);
+    }
+
+    let offer_sbts = [];
+    if(register_job_ids.length > 0) {
+      const offer_sbt_sql = 'SELECT sbt_id FROM offers WHERE job_id IN ('+register_job_ids.join(",")+')';
+      offer_sbts = await mysql.select(offer_sbt_sql);
+    }
+
+    return res.status(200).send(JSON.stringify({status: true, name: "Sai SBT", description: "Visualize Your Skill for New Era.", image: process.env.APP_URL+"/img/sbt.92f29dce.gif", owner: sbt_data[0].wallet_address, data: skill_value_data, register_jobs: register_jobs, application_jobs: application_jobs, offer_sbts: offer_sbts}));
   },
  
   // SBT詳細
@@ -67,6 +103,33 @@ module.exports = {
     const gas_price = await ethereum.gasPrice();
     const gas_limit = await ethereum.gasLimit(address, process.env.SBT_ADDRESS, nonce, calldata);
     return res.status(200).send(JSON.stringify({status: true, sbt_address: process.env.SBT_ADDRESS, calldata: calldata, gas_price: gas_price, gas_limit: gas_limit}));
+  },
+
+  // ユーザー更新
+  profileUpdate: async (req, res, next) => {
+
+    const sbt_id = req.params.sbt_id;
+    const name = req.params.name;
+    const description = req.params.description;
+   
+    let sql = 'SELECT wallet_address FROM sbts WHERE sbt_id = '+sbt_id;
+    const dataes = await mysql.select(sql);
+
+    if(dataes.length == 0) {
+      return res.status(200).send(JSON.stringify({status: true}));
+    }
+
+    if(users.length > 0) {
+      sql = 'UPDATE users SET name = "'+name+'", description = "'+description+'" WHERE wallet_address = "'+dataes[0].wallet_address+'"';
+      await mysql.insert(sql);
+    } else {
+      sql = 'INSERT INTO users (name, description, wallet_address) VALUES ("'+name+'", "'+description+'", "'+dataes[0].wallet_address+'")';
+      await mysql.insert(sql);
+    }
+
+    const skill_value_sql = 'SELECT skills.skill_name, skill_values.value FROM skill_values INNER JOIN skills ON skill_values.skill_id = skills.skill_id WHERE skill_values.sbt_id = '+sbt_data[0].sbt_id+' ORDER BY skill_values.value DESC;';
+    const skill_value_data = await mysql.select(skill_value_sql);
+    return res.status(200).send(JSON.stringify({status: true, sbt_id: sbt_data[0].sbt_id, data: skill_value_data}));
   },
 
 };
