@@ -19,126 +19,95 @@ class Mysql {
     });
   }
 
-  select(sql) {
+  select(sql, params = []) {
     return new Promise((resolve, reject) =>{
       this.pool.getConnection(function(err, connection){
-
         if(err) {
           reject(err);
         }
-
-        connection.query(sql, function (error, results, fields) {
-
+        connection.query(sql, params, function (error, results, fields) {
           connection.release();
-
           if(error) {
             reject(error);
           }
-
           resolve(results);
-
         });
       });
     });
   };
 
-  update(sql) {
+  update(sql, params = []) {
     return new Promise((resolve, reject) =>{
       this.pool.getConnection(function(err, connection){
-
         if(err) {
           reject(err);
         }
-
-        connection.query(sql, function (error, results, fields) {
-
+        connection.query(sql, params, function (error, results, fields) {
           connection.release();
-
           if(error) {
             reject(error);
           }
-
           resolve(results);
-
         });
       });
     });
   };
 
-  insert(sql) {
+  insert(sql, params = []) {
     return new Promise((resolve, reject) =>{
       this.pool.getConnection(function(err, connection){
-
         if(err) {
           reject(err);
         }
-
-        connection.query(sql, function (error, results, fields) {
-
+        connection.query(sql, params, function (error, results, fields) {
           connection.release();
-
           if(error) {
             reject(error);
           }
-
           try {
             resolve(results.insertId);
           } catch (e) {
             console.log(e.message);
             reject(e);
           }
-
         });
       });
     });
   };
 
-  delete(sql) {
+  delete(sql, params = []) {
     return new Promise((resolve, reject) =>{
       this.pool.getConnection(function(err, connection){
-
         if(err) {
           reject(err);
         }
-
-        connection.query(sql, function (error, results, fields) {
-
+        connection.query(sql, params, function (error, results, fields) {
           connection.release();
-
           if(error) {
             reject(error);
           }
-
           resolve(results);
-
         });
       });
     });
   };
 
-  exists(sql) {
+  exists(sql, params = []) {
     return new Promise((resolve, reject) =>{
       this.pool.getConnection(function(err, connection){
-
         if(err) {
           reject(err);
         }
-
-        connection.query(sql, function (error, results, fields) {
-
+        connection.query(sql, params, function (error, results, fields) {
           connection.release();
-
           if(error) {
             reject(error);
           }
-
-
           if(results && Array.isArray(results) && results.length > 0) {
             resolve(true);
           } else {
             resolve(false);
           }
-
         });
       });
     });

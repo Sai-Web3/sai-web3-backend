@@ -63,7 +63,8 @@ class AI {
 				job_id: job_id,
 				match_count: match_count,
 				total_count: job_skills[job_id].length,
-				point: job_skills[job_id].length > 0 ? (100 * match_count / job_skills[job_id].length) : 100,
+				// point: job_skills[job_id].length > 0 ? (100 * match_count / job_skills[job_id].length) : 100,
+				point: sbt_skill_ids.length > 0 ? (100 * match_count / sbt_skill_ids.length)) : 0,
 				skill_ids: skill_ids,
 			});
 		}
@@ -91,8 +92,8 @@ class AI {
 				sbt_id: sbt_id,
 				match_count: match_count,
 				total_count: job_skill_ids.length,
-				// point: job_skill_ids.length > 0 ? (match_count > job_skill_ids.length ? 100 : (100 * match_count / job_skill_ids.length)) : 0,
-				point: job_skill_ids.length > 0 ? (100 * match_count / job_skill_ids.length) : 0,
+				// point: job_skill_ids.length > 0 ? (100 * match_count / job_skill_ids.length) : 0,
+				point: sbt_skills[sbt_id].length > 0 ? (100 * match_count / sbt_skills[sbt_id].length)) : 0,
 				skill_ids: skill_ids,
 			});
 		}
