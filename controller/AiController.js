@@ -22,7 +22,7 @@ module.exports = {
   analysis: async (req, res, next) => {
 
     const name = req.body.name;
-    const description = req.body.description;
+    const comment = req.body.comment;
     const to = req.body.to;
     const career = req.body.career;
     const is_skip = req.body.is_skip || false;
@@ -30,14 +30,14 @@ module.exports = {
     let skills = [];
     let skill_values = [];
 
-    let sql = 'SELECT * FROM users WHERE wallet_address = "'+to+'"';
-    const users = await mysql.select(sql);
+    let sql = 'SELECT * FROM profiles WHERE wallet_address = "'+web3.utils.toChecksumAddress(to)+'"';
+    const profiles = await mysql.select(sql);
 
-    if(users.length > 0) {
-      sql = 'UPDATE users SET name = "'+name+'", description = "'+description+'" WHERE wallet_address = "'+to+'"';
-      await mysql.insert(sql);
+    if(profiles.length > 0) {
+      sql = 'UPDATE profiles SET name = "'+name+'", comment = "'+comment+'" WHERE wallet_address = "'+web3.utils.toChecksumAddress(to)+'"';
+      await mysql.update(sql);
     } else {
-      sql = 'INSERT INTO users (name, description, wallet_address) VALUES ("'+name+'", "'+description+'", "'+to+'")';
+      sql = 'INSERT INTO profiles (sbt_id, name, comment, wallet_address) VALUES (-1, "'+name+'", "'+comment+'", "'+web3.utils.toChecksumAddress(to)+'")';
       await mysql.insert(sql);
     }
 

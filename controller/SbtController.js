@@ -22,8 +22,11 @@ module.exports = {
 
     const sbt_id = req.params.sbt_id;
 
-    const sbt_sql = 'SELECT wallet_address FROM sbts WHERE sbt_id = '+sbt_id+';';
+    const sbt_sql = 'SELECT wallet_address FROM sbts WHERE sbt_id = '+sbt_id;
     const sbt_data = await mysql.select(sbt_sql);
+
+    const profile_sql = 'SELECT name, comment FROM profiles WHERE sbt_id = '+sbt_id;
+    const profiles = await mysql.select(profile_sql);
 
     const skill_value_sql = 'SELECT skills.skill_name, skills.skill_type_id, skill_values.value, skills.description FROM skill_values INNER JOIN skills ON skill_values.skill_id = skills.skill_id WHERE skill_values.sbt_id = '+sbt_id+' ORDER BY skill_values.value DESC;';
     const skill_value_data = await mysql.select(skill_value_sql);
@@ -60,7 +63,21 @@ module.exports = {
       offer_sbts = await mysql.select(offer_sbt_sql);
     }
 
-    return res.status(200).send(JSON.stringify({status: true, name: "Sai SBT", description: "Visualize Your Skill for New Era.", image: process.env.APP_URL+"/img/sbt.92f29dce.gif", owner: sbt_data[0].wallet_address, data: skill_value_data, register_jobs: register_jobs, application_jobs: application_jobs, offer_sbts: offer_sbts}));
+    return res.status(200).send(JSON.stringify({
+      status: true,
+      name: "Sai SBT",
+      description: "Visualize Your Skill for New Era.",
+      image: process.env.APP_URL+"/img/sbt.92f29dce.gif",
+      owner: sbt_data[0].wallet_address,
+      data: skill_value_data,
+      register_jobs: register_jobs,
+      application_jobs: application_jobs,
+      offer_sbts: offer_sbts,
+      profile: {
+        name: profiles.length > 0 ? profiles[0].name: "",
+        comment: profiles.length > 0 ? profiles[0].comment: "",
+      }
+    }));
   },
  
   // SBT詳細
@@ -106,11 +123,11 @@ module.exports = {
   },
 
   // ユーザー更新
-  profileUpdate: async (req, res, next) => {
+  updateProfile: async (req, res, next) => {
 
-    const sbt_id = req.params.sbt_id;
-    const name = req.params.name;
-    const description = req.params.description;
+    const sbt_id = req.body.sbt_id;
+    const name = req.body.name;
+    const comment = req.body.comment;
    
     let sql = 'SELECT wallet_address FROM sbts WHERE sbt_id = '+sbt_id;
     const dataes = await mysql.select(sql);
@@ -119,17 +136,18 @@ module.exports = {
       return res.status(200).send(JSON.stringify({status: true}));
     }
 
-    if(users.length > 0) {
-      sql = 'UPDATE users SET name = "'+name+'", description = "'+description+'" WHERE wallet_address = "'+dataes[0].wallet_address+'"';
-      await mysql.insert(sql);
+    sql = 'SELECT * FROM profiles WHERE sbt_id = '+sbt_id+' AND wallet_address = "'+dataes[0].wallet_address+'"';
+    const profiles = await mysql.select(sql);
+
+    if(profiles.length > 0) {
+      sql = 'UPDATE profiles SET name = "'+name+'", comment = "'+comment+'" WHERE sbt_id = '+sbt_id+' AND wallet_address = "'+dataes[0].wallet_address+'"';
+      await mysql.update(sql);
     } else {
-      sql = 'INSERT INTO users (name, description, wallet_address) VALUES ("'+name+'", "'+description+'", "'+dataes[0].wallet_address+'")';
+      sql = 'INSERT INTO profiles (sbt_id, name, comment, wallet_address) VALUES ('+sbt_id+', "'+name+'", "'+comment+'", "'+dataes[0].wallet_address+'")';
       await mysql.insert(sql);
     }
 
-    const skill_value_sql = 'SELECT skills.skill_name, skill_values.value FROM skill_values INNER JOIN skills ON skill_values.skill_id = skills.skill_id WHERE skill_values.sbt_id = '+sbt_data[0].sbt_id+' ORDER BY skill_values.value DESC;';
-    const skill_value_data = await mysql.select(skill_value_sql);
-    return res.status(200).send(JSON.stringify({status: true, sbt_id: sbt_data[0].sbt_id, data: skill_value_data}));
+    return res.status(200).send(JSON.stringify({status: true}));
   },
 
 };
