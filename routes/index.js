@@ -11,7 +11,6 @@ router.get('/sbt/balance/:address', SbtController.balance);
 router.get('/sbt/detail/:sbt_id', SbtController.detail);
 router.get('/sbt/account/:address', SbtController.account);
 router.post('/sbt/search', SbtController.search);
-router.post('/sbt/mint_parameter', SbtController.mint_parameter);
 router.post('/sbt/profile/update/:sbt_id', SbtController.updateProfile);
 
 router.post('/ai/analysis', AiController.analysis);

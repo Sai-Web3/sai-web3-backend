@@ -99,23 +99,6 @@ module.exports = {
     }
   },
 
-  mint_parameter: async (req, res, next) => {
-    try {
-      const address = req.body.address;
-      const calldata = await sbt.mintABI(address);
-      const [nonce, gas_price, gas_limit] = await Promise.all([
-        ethereum.nonce(address),
-        ethereum.gasPrice(),
-        ethereum.gasLimit(address, process.env.SBT_ADDRESS, nonce, calldata)
-      ]);
-
-      return res.status(200).send({status: true, sbt_address: process.env.SBT_ADDRESS, calldata: calldata, gas_price: gas_price, gas_limit: gas_limit});
-    } catch (error) {
-      console.error(error);
-      return res.status(503).send({ status: false, message: error.message });
-    }
-  },
-
   updateProfile: async (req, res, next) => {
     try {
       const sbt_id = req.body.sbt_id;

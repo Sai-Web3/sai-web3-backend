@@ -28,7 +28,7 @@ module.exports = {
       const job_dataes = await mysql.select('SELECT * FROM jobs');
       const jobs = reduceToMap(job_dataes, 'job_id', 'title');
 
-      const sbt_skill_dataes = await mysql.select('SELECT * FROM skill_values WHERE sbt_id = ? ORDER BY value DESC LIMIT ?', [sbt_id, process.env.MATCHING_USER_SKILL_LIMIT]);
+      const sbt_skill_dataes = await mysql.select('SELECT * FROM skill_values WHERE sbt_id = ? ORDER BY value DESC LIMIT ?', [sbt_id, parseInt(process.env.MATCHING_USER_SKILL_LIMIT)]);
       const sbt_skill_ids = sbt_skill_dataes.map(data => data.skill_id);
       let skills = {};
 

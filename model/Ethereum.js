@@ -4,38 +4,43 @@ const Bignumber = require('bignumber.js');
 const Web3 = require("web3");
 
 class Ethereum {
-  constructor () {
+
+  constructor (node_url) {
     this.web3 = new Web3(new Web3.providers.HttpProvider(process.env.NODE_URL));
   }
 
-  async sign (from, privateKey, to, gasLimit, amount, data) {
-    privateKey = privateKey.replace('0x', '');
+  sign (from, privateKey, to, gasLimit, amount, data) {
+
     const params = {
-      from, 
-      to, 
-      gas: this.web3.utils.toHex(gasLimit), 
-      value: new Bignumber(amount).multipliedBy(1e18).toNumber(),
+      from,
+      to,
+      gas: this.web3.utils.toHex(gasLimit),
+      value: new Bignumber(amount).multipliedBy(1e18).toFixed(),
       data
     };
 
+    privateKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
     return this.web3.eth.accounts.signTransaction(params, privateKey);
   };
 
-  sendSignedTransaction (signature) {
-    return this.web3.eth.sendSignedTransaction(signature).then(transaction => transaction.transactionHash);
+  async send (signature) {
+    const transaction = await this.web3.eth.sendSignedTransaction(signature);
+    return transaction.transactionHash;
   };
 
-  getGasPrice () {
+  gasPrice () {
     return this.web3.eth.getGasPrice();
   };
 
-  estimateGas (from, to, nonce, data) {
+  gasLimit (from, to, nonce, data) {
     return this.web3.eth.estimateGas({from, nonce, to, data});
   };
 
-  getTransactionCount (address) {
+  nonce (address) {
     return this.web3.eth.getTransactionCount(address);
   };
+
 }
+
 
 module.exports = Ethereum;
