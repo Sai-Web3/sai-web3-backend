@@ -75,17 +75,15 @@ module.exports = {
       await mysql.update('UPDATE jobs SET job_id = ? WHERE id = ?', [job_id, job_id]);
 
       // matching
-      const result = await ai.analyze(input_text, "1990-1", "2000-1", process.env.ADMIN_ADDRESS)
+      const result = await ai.chatgpt(input_text)
       let recommend_skills = [];
-
-      const dataes = await mysql.select('SELECT * FROM career_skill_values WHERE career_id = ? ORDER BY value DESC', [result.data.career_id]);
       let index = 0;
 
-      for(let i in dataes) {
-        const skill_dataes = await mysql.select('SELECT * FROM skills WHERE skill_id = ? AND skill_type_id = 2', [dataes[i].skill_id]);
+      for(let i in result.data.response) {
+        const skill_dataes = await mysql.select('SELECT * FROM skills WHERE skill_id = ? AND skill_type_id = 2', [result.data.response[i]]);
 
         if(skill_dataes.length > 0) {
-          recommend_skills.push(dataes[i].skill_id);
+          recommend_skills.push(result.data.response[i]);
           index++;
         }
 

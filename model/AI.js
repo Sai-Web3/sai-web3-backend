@@ -16,6 +16,11 @@ class AI {
         return this.post("/api/skill_elements/", params);
     }
 
+    chatgpt(input_text) {
+        const params = { input_text };
+        return this.post("/api/chat_gpt/", params);
+    }
+
     post(path, params) {
         return axios.post(process.env.AI_URL + path, params).catch((err) => {
             console.error(err.message);
