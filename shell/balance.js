@@ -2,76 +2,64 @@ require('dotenv').config();
 require('date-utils');
 
 const Web3 = require('web3');
-const web3 = new Web3();
-
 const Ethereum = require('../model/Ethereum');
 const Mysql = require("../model/Mysql");
 const SBT = require('../model/SBT');
 
+const web3 = new Web3();
 const ethereum = new Ethereum();
 const mysql = new Mysql(process.env.DB_HOST, process.env.DB_USER, process.env.DB_PASS, process.env.DB_NAME, 3306);
 const sbt = new SBT();
 
 (async function main() {
-
   try {
-    
     const startTime = Date.now();
-    while (true) {
+    while (Date.now() - startTime <= 50000) {
       await check();
-      if (Date.now() - startTime > 50000) {
-        break;
-      }
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await sleep(5000);
     }
-
-    mysql.close();
-    process.exit();
-
   } catch(err) {
     console.info(JSON.stringify(err.message));
+  } finally {
     mysql.close();
     process.exit();
   }
-
 })();
-
-
 
 async function check() {
   try {
+    const totalSupply = await sbt.totalSupply();
+    const [{ max_sbt_id: maxSbtId }] = await mysql.select('SELECT max(sbt_id) AS max_sbt_id FROM sbts');
 
-    const total_supply = await sbt.totalSupply();
-    const sql = 'SELECT max(sbt_id) AS max_sbt_id FROM sbts';
-    const data = await mysql.select(sql);
-
-    for(let i = data[0].max_sbt_id + 1; i < total_supply; i++) {
-
+    for(let i = maxSbtId + 1; i < totalSupply; i++) {
       const owner = await sbt.owner(i);
-      const insert_sql = 'INSERT INTO sbts (sbt_id, name, wallet_address) VALUES ('+i+', "","'+web3.utils.toChecksumAddress(owner)+'") ON DUPLICATE KEY UPDATE wallet_address = "'+web3.utils.toChecksumAddress(owner)+'";';
-      await mysql.insert(insert_sql);
+      const ownerChecksumAddress = web3.utils.toChecksumAddress(owner);
+      
+      const insertSbtsQuery = `INSERT INTO sbts (sbt_id, name, wallet_address) VALUES (${i}, "", "${ownerChecksumAddress}") ON DUPLICATE KEY UPDATE wallet_address = "${ownerChecksumAddress}";`;
+      await mysql.insert(insertSbtsQuery);
 
-      const profile_sql = 'SELECT * FROM profiles WHERE wallet_address = "'+web3.utils.toChecksumAddress(owner)+'"';
-      const profiles = await mysql.select(profile_sql);
+      const profiles = await mysql.select(`SELECT * FROM profiles WHERE wallet_address = "${ownerChecksumAddress}"`);
 
+      let profileQuery;
       if(profiles.length > 0) {
-        let sql = 'UPDATE profiles SET sbt_id = '+i+' WHERE wallet_address = "'+web3.utils.toChecksumAddress(owner)+'"';
-        await mysql.update(sql);
+        profileQuery = `UPDATE profiles SET sbt_id = ${i} WHERE wallet_address = "${ownerChecksumAddress}"`;
       } else {
-        let sql = 'INSERT INTO profiles (sbt_id, name, comment, wallet_address) VALUES ('+i+', "", "", "'+web3.utils.toChecksumAddress(owner)+'")';
-        await mysql.insert(sql);
+        profileQuery = `INSERT INTO profiles (sbt_id, name, comment, wallet_address) VALUES (${i}, "", "", "${ownerChecksumAddress}")`;
       }
+      await mysql.update(profileQuery);
 
-      const dataes = await sbt.skillValues(i);
-
-      for(let index in dataes) {
-        const skill_sql = 'INSERT INTO skill_values (sbt_id, skill_id, value) VALUES ('+i+', '+dataes[index].id+', '+dataes[index].value+')';
-        await mysql.insert(skill_sql);
+      const skillValues = await sbt.skillValues(i);
+      for(const { id, value } of skillValues) {
+        const skillSql = `INSERT INTO skill_values (sbt_id, skill_id, value) VALUES (${i}, ${id}, ${value})`;
+        await mysql.insert(skillSql);
       }
-
     }
-
   } catch(err) {
     throw err;
   }
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+

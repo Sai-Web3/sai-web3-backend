@@ -48,7 +48,7 @@ module.exports = {
       const gas_price = await ethereum.gasPrice();
       const gas_limit = await ethereum.gasLimit(to, process.env.SBT_ADDRESS, nonce, calldata);
 
-      return res.status(200).send(JSON.stringify({status: true, sbt_address: process.env.SBT_ADDRESS, calldata: calldata, gas_price: gas_price, gas_limit: gas_limit}));
+      return res.status(200).send({status: true, sbt_address: process.env.SBT_ADDRESS, calldata: calldata, gas_price: gas_price, gas_limit: gas_limit});
 
     } catch (error) {
       console.error(error);
